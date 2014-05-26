@@ -1,0 +1,20 @@
+<form lo-autofocus>
+  <div class="modal-header">
+    <button type="button" class="close" ng-click="cancel()">
+      <span class="pficon pficon-close"></span>
+    </button>
+    <h4 class="modal-title">Create New Collection</h4>
+  </div>
+  <div class="modal-body">
+    <div class="form-group clearfix">
+      <label for="collection-name" class="col-sm-3 control-label">Collection Name</label>
+      <div class="col-sm-7">
+        <input type="text" class="form-control" id="collection-name" ng-model="collectionName" autofocus>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default btn-lg" ng-click="cancel()">Cancel</button>
+    <button type="submit" class="btn btn-primary btn-lg" ng-click="collectionCreate(collectionName); close()" ng-disabled="!collectionName">Add</button>
+  </div>
+</form>

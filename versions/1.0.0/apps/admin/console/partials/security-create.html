@@ -1,0 +1,76 @@
+<div id="lo-content-row" class="row">
+  <lo-navigation ng-controller="AppDropdownCtrl" data-lo-current="security" data-lo-apps="applications" data-lo-app="curApp"></lo-navigation>
+
+  <div class="col-md-10 lo-main-pane">
+    <div class="row">
+      <div class="lo-content-area col-md-9">
+
+        <lo-breadcrumbs></lo-breadcrumbs>
+
+        <h2 class="pull-left"><span>{{currentCollection}}</span> Security</h2>
+        <p class="subtitle"><span class="required">*</span> Required fields</p>
+
+        <form class="lo-form-horizontal clearfix" name="securityForm" novalidate>
+          <fieldset>
+            <legend lo-collapse class="collapsible"><span class="text">Collection Settings</span></legend>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="collection">Collection <span class="required">*</span></label>
+              <select lo-select class="col-sm-9" id="collection" ng-options="col.id as col.id for col in collectionsList" ng-model="currentCollection">
+              </select>
+            </div>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="access">Can access the collection <span class="required">*</span></label>
+              <select lo-select class="col-sm-9" id="access" ng-options="(curApp.name + '/' + role.name) as (curApp.name + '/' + role.name) for role in appRoles" ng-model="settings.accessRoles" ng-disabled="appRoles.length == 0" multiple>
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend lo-collapse class="collapsible"><span class="text">Entry Settings</span></legend>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="createentry">Can create an entry <span class="required">*</span></label>
+              <select lo-select class="col-sm-9" id="createentry" ng-options="role as role for role in settings.accessRoles" ng-model="settings.createEntryRoles" ng-disabled="settings.accessRoles.length === 0" multiple>
+              </select>
+            </div>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="creator">Entry creator can <span class="required">*</span></label>
+              <select lo-select class="col-sm-9" multiple id="creator" ng-options="permission for permission in availablePermissions" ng-model="settings.ownerPermissions">
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend lo-collapse class="collapsible"><span class="text">Super Permissions</span></legend>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="readall">Can read all entries</label>
+              <select lo-select class="col-sm-9" id="readall" ng-options="role as role for role in settings.accessRoles" ng-model="settings.readAllRoles" ng-disabled="settings.accessRoles.length == 0" multiple>
+              </select>
+            </div>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="updateall">Can update all entries</label>
+              <select lo-select class="col-sm-9" id="updateall" ng-options="role as role for role in settings.accessRoles" ng-model="settings.updateAllRoles" ng-disabled="settings.accessRoles.length == 0" multiple>
+              </select>
+            </div>
+            <div class="form-group clearfix">
+              <label class="col-sm-3 control-label" for="deleteall">Can delete all entries</label>
+              <select lo-select class="col-sm-9" id="deleteall" ng-options="role as role for role in settings.accessRoles" ng-model="settings.deleteAllRoles" ng-disabled="settings.accessRoles.length == 0" multiple>
+              </select>
+            </div>
+
+          </fieldset>
+
+          <div class="pull-right form-actions">
+            <button lo-button-clear="clear()" ng-hide="create" ng-disabled="!changed">Clear changes</button>
+            <button lo-button-clear="cancelCreate()" ng-show="create">Cancel</button>
+            <button lo-button-save="save()" ng-disabled="!changed || !securityForm.$valid">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize Boostrap-select
+  $('.selectpicker').selectpicker();
+</script>

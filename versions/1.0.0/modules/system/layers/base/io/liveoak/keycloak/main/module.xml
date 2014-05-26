@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.1" name="io.liveoak.keycloak">
+    <resources>
+        <resource-root path="liveoak-keycloak.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="io.liveoak.common"/>
+        <module name="io.liveoak.spi"/>
+        <module name="io.liveoak.interceptor"/>
+        <module name="org.keycloak.core"/>
+        <module name="org.jboss.resteasy.resteasy-jackson-provider"/>
+        <module name="org.apache.httpcomponents" slot="4.3"/>
+    </dependencies>
+</module>

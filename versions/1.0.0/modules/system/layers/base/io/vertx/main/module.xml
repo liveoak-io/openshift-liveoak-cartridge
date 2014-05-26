@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2013 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ Licensed under the Eclipse Public License version 1.0, available at http://www.eclipse.org/legal/epl-v10.html
+  -->
+<module xmlns="urn:jboss:module:1.0" name="io.vertx">
+
+    <resources>
+        <artifact name="io.vertx:vertx-core:2.0.1-final"/>
+        <artifact name="io.vertx:vertx-platform:2.0.1-final"/>
+        <artifact name="com.hazelcast:hazelcast:2.6"/>
+    </resources>
+
+    <dependencies>
+        <module name="io.netty" slot="liveoak"/>
+        <module name="com.fasterxml.jackson.core"/>
+        <system>
+            <paths>
+                <path name="javax/management"/>
+                <path name="javax/net/ssl"/>
+            </paths>
+        </system>
+    </dependencies>
+
+</module>
+

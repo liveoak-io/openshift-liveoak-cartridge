@@ -1,0 +1,169 @@
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.jboss.xnio</groupId>
+    <artifactId>xnio-all</artifactId>
+    <packaging>pom</packaging>
+    <name>XNIO Parent POM</name>
+    <version>3.2.0.Beta3</version>
+    <description>The aggregator POM of the XNIO project</description>
+
+    <modules>
+        <module>api</module>
+        <module>nio-impl</module>
+    </modules>
+
+    <properties>
+        <version.surefire.plugin>2.8</version.surefire.plugin>
+        <byteman-version>2.0.4</byteman-version>
+
+        <!-- tools.jar location, this needs to be overriden on OSX -->
+        <com.sun.tools.path>${java.home}/../lib/tools.jar</com.sun.tools.path>
+    </properties>
+
+    <parent>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-parent</artifactId>
+        <version>11</version>
+    </parent>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jboss.seven2six</groupId>
+                    <artifactId>seven2six</artifactId>
+                    <version>1.1.Final</version>
+                    <executions>
+                        <!-- run after "compile", lets your artifact work on 1.6 -->
+                        <execution>
+                            <id>weave</id>
+                            <phase>process-classes</phase>
+                            <goals>
+                                <goal>transform</goal>
+                            </goals>
+                        </execution>
+                        <!-- run after "test-compile", lets you run your tests on 1.6 -->
+                        <execution>
+                            <id>weave-tests</id>
+                            <phase>process-test-classes</phase>
+                            <goals>
+                                <goal>transform</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>xnio-nio</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.xnio</groupId>
+                <artifactId>compat-tool</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging</artifactId>
+                <version>3.1.2.GA</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-processor</artifactId>
+                <version>1.2.0.Beta1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logging</groupId>
+                <artifactId>jboss-logging-annotations</artifactId>
+                <version>1.2.0.Beta1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jmock</groupId>
+                <artifactId>jmock</artifactId>
+                <version>2.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jmock</groupId>
+                <artifactId>jmock-junit4</artifactId>
+                <version>2.5.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.logmanager</groupId>
+                <artifactId>jboss-logmanager</artifactId>
+                <version>1.2.0.GA</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.8.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.byteman</groupId>
+                <artifactId>byteman</artifactId>
+                <version>${byteman-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.byteman</groupId>
+                <artifactId>byteman-bmunit</artifactId>
+                <version>${byteman-version}</version>
+                <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>testng</artifactId>
+                        <groupId>org.testng</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.jboss.byteman</groupId>
+                <artifactId>byteman-install</artifactId>
+                <version>${byteman-version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- The dependency is pull in indirectly from byteman -->
+            <!-- We override it here to allow it to work correctly on osx -->
+            <dependency>
+                <groupId>com.sun</groupId>
+                <artifactId>tools</artifactId>
+                <scope>system</scope>
+                <version>1.6</version>
+                <systemPath>${com.sun.tools.path}</systemPath>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>os-x</id>
+            <activation>
+                <file>
+                    <exists>${java.home}/bundle/Classes/classes.jar</exists>
+                </file>
+            </activation>
+            <properties>
+                <com.sun.tools.path>${java.home}/bundle/Classes/classes.jar</com.sun.tools.path>
+            </properties>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2013 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ Licensed under the Eclipse Public License version 1.0, available at http://www.eclipse.org/legal/epl-v10.html
+  -->
+<module xmlns="urn:jboss:module:1.0" name="io.liveoak.ups">
+
+    <resources>
+        <resource-root path="liveoak-ups.jar"/>
+
+        <!-- Aerogear UPS Client Dependencies --> 
+        <artifact name="org.jboss.aerogear:unifiedpush-java-client:0.5.0"/>
+        <artifact name="org.jboss.resteasy:resteasy-jackson-provider:3.0.6.Final"/>
+        <artifact name="org.codehaus.jackson:jackson-core-asl:1.9.12"/> 
+        <artifact name="org.codehaus.jackson:jackson-mapper-asl:1.9.12"/> 
+        <artifact name="net.iharder:base64:2.3.8"/>
+    </resources>
+
+    <dependencies>
+        <module name="io.liveoak.spi"/>
+        <module name="io.liveoak.mongo"/>
+        <system>
+            <paths>
+                <path name="javax/net"/>
+            </paths>
+        </system>
+    </dependencies>
+</module>
+

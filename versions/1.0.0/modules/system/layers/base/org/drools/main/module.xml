@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2013 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ Licensed under the Eclipse Public License version 1.0, available at http://www.eclipse.org/legal/epl-v10.html
+  -->
+<module xmlns="urn:jboss:module:1.0" name="org.drools">
+
+    <resources>
+        <artifact name="org.drools:drools-compiler:5.6.0.Final"/>
+        <artifact name="org.drools:drools-templates:5.6.0.Final"/>
+        <artifact name="org.drools:drools-core:5.6.0.Final"/>
+        <artifact name="org.drools:knowledge-api:5.6.0.Final"/>
+        <artifact name="org.drools:knowledge-internal-api:5.6.0.Final"/>
+        <artifact name="org.codehaus.janino:janino:2.5.16"/>
+        <artifact name="org.mvel:mvel2:2.1.8.Final"/>
+        <artifact name="org.antlr:antlr-runtime:3.3"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.slf4j"/>
+        <system>
+            <paths>
+                <path name="org/xml/sax"/>
+            </paths>
+        </system>
+    </dependencies>
+
+</module>

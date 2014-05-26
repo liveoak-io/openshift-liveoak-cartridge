@@ -1,0 +1,4 @@
+{
+    module-id:  'io.liveoak.mongo-gridfs',
+    dependencies: ['mongo-launcher']
+}
