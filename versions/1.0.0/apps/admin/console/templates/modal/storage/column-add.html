@@ -1,20 +1,21 @@
-<form lo-autofocus>
+<form name="formColumnAdd">
   <div class="modal-header">
     <button type="button" class="close" ng-click="cancel()">
       <span class="pficon pficon-close"></span>
     </button>
-    <h4 class="modal-title">Add New Column</h4>
+    <h4 class="modal-title">Add Column</h4>
   </div>
   <div class="modal-body">
     <div class="form-group clearfix">
       <label for="column-name" class="col-sm-3 control-label">Column Name</label>
       <div class="col-sm-7">
-        <input type="text" class="form-control" id="column-name" ng-model="columnName" autofocus required/>
+        <input type="text" class="form-control" id="column-name" ng-model="columnName" pf-focused="true"
+               pf-validation="columnAvailable(input)" required/>
       </div>
     </div>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
-    <button type="submit" class="btn btn-primary" ng-click="columnAdd(columnName); close()" ng-disabled="!columnName">Add</button>
+    <button type="submit" class="btn btn-primary" ng-click="columnAdd(columnName); close()" ng-disabled="!columnName || !formColumnAdd.$valid">Add</button>
   </div>
 </form>

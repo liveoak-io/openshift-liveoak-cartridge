@@ -1,0 +1,62 @@
+<div class="col-md-10 lo-main-pane">
+  <div class="row">
+      <ul class="nav nav-tabs nav-tabs-pf">
+        <li><a href="#/applications/{{curApp.id}}/security/policies">Policies</a></li>
+        <li class="active"><a href="">Roles</a></li>
+        <li><a href="#/applications/{{curApp.id}}/security/users">Users</a></li>
+      </ul>
+
+      <div class="lo-content-area col-md-9">
+
+      <lo-breadcrumbs></lo-breadcrumbs>
+
+      <h2><span>{{curApp.name}}</span> Roles</h2>
+      
+      <hr/>
+
+      <form class="lo-form-horizontal clearfix">
+        <fieldset>
+          <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+              <th colspan="4" class="table-actions">
+                <div class="pull-right">
+                  <button class="btn btn-default" ng-click="modalAddRole()">New Role</button>
+                </div>
+              </th>
+            </tr>
+            <tr ng-show="settings.roles.length > 0">
+              <th>Name</th>
+              <th>Description</th>
+              <th class="actions">Default</th>
+              <th class="actions">Actions</th>
+            </tr>
+            <tr ng-show="settings.roles.length === 0">
+              <th colspan="4">No Applications Roles defined.</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="role in settings.roles">
+              <td><span>{{ role.name }}</span></td>
+              <td><span>{{ role.description }}</span></td>
+              <td class="actions"><i class="fa fa-check clickable lo-checkbox" ng-class="{selected: (settings.defaultRoles.indexOf(role.name) > -1)}" ng-click="toggleDefaultRole(role.name)" tooltip="Toggle Default Role"></i></td>
+              <td class="actions">
+                <button class="btn btn-link btn-icon" data-tooltip-placement="top" data-tooltip="Delete Role" ng-click="modalDeleteRole(role)">
+                  <i class="fa fa-trash-o"></i>
+                  <span>Delete Role</span>
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+          <!--
+          <div class="pull-right form-actions">
+            <button class="btn btn-default btn-lg" ng-disabled="!changed" type="button" ng-click="clear()">Clear changes</button>
+            <button class="btn btn-primary btn-lg" ng-disabled="!changed" type="submit" ng-click="save()">Save</button>
+          </div>
+          -->
+        </fieldset>
+      </form>
+    </div>
+  </div>
+</div>

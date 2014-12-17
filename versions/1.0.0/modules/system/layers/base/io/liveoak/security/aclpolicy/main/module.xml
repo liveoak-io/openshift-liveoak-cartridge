@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  ~ Copyright 2013 Red Hat, Inc. and/or its affiliates.
+  ~ Copyright 2014 Red Hat, Inc. and/or its affiliates.
   ~
   ~ Licensed under the Eclipse Public License version 1.0, available at http://www.eclipse.org/legal/epl-v10.html
   -->
-<module xmlns="urn:jboss:module:1.0" name="io.liveoak.security.aclpolicy">
+<module xmlns="urn:jboss:module:1.3" name="io.liveoak.security.aclpolicy">
 
     <resources>
         <resource-root path="liveoak-security-aclpolicy.jar"/>
@@ -15,7 +15,7 @@
         <module name="io.liveoak.spi"/>
         <module name="io.liveoak.common"/>
         <module name="io.liveoak.interceptor"/>
-        <module name="io.liveoak.mongo"/>
+        <module name="io.liveoak.mongo.internal"/>
         <module name="com.fasterxml.jackson.core"/>
         <module name="org.mongodb"/>
     </dependencies>

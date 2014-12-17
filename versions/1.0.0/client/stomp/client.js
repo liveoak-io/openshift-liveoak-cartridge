@@ -15,7 +15,8 @@ var Stomp = {
         CONTENT_LENGTH: 'content-length',
         CONTENT_TYPE: 'content-type',
         ACCEPT_VERSION: 'accept-version',
-        VERSION: 'version'
+        VERSION: 'version',
+        APPLICATION_ID: 'application-id'
     },
 
     Transport: {
@@ -110,21 +111,18 @@ var Stomp = {
 
 };
 
-Stomp
-
-
-Stomp.Client = function (host, port, secure) {
+Stomp.Client = function (host, port, secure, appId) {
     this._host = host || Stomp.DEFAULT_HOST;
     this._port = port || Stomp.DEFAULT_PORT || 8080;
     this._secure = secure || Stomp.DEFAULT_SECURE_FLAG || false;
+    this._appId = appId || "";
 }
 
 Stomp.Client.prototype = {
 
     Versions: {
         VERSION_1_0: "1.0",
-        VERSION_1_1: "1.1",
-
+        VERSION_1_1: "1.1"
     },
 
     supportedVersions: function () {
@@ -151,7 +149,11 @@ Stomp.Client.prototype = {
             this._errorCallback = arguments[3];
         }
 
-        this._connectTransport(this._connectCallback);
+        if (this._transport === undefined) {
+            this._connectTransport(this._connectCallback);
+        } else {
+            this._connectCallback();
+        }
 
     },
 
@@ -162,6 +164,9 @@ Stomp.Client.prototype = {
             t.client = this;
             if (this._login && this._passcode) {
               t.setAuth(this._login, this._passcode);
+            }
+            if (this._appId) {
+              t.setApplication(this._appId);
             }
             transports.push(t);
         }
@@ -191,7 +196,7 @@ Stomp.Client.prototype = {
                     transports[i].connect(function () {
                         client._transport = transports[i];
                         callback();
-                    }, client.connectionFailed.bind(this));
+                    }, fallback);
                 } catch (err) {
                     fallback();
                 }
@@ -293,6 +298,6 @@ Stomp.Client.prototype = {
 
     _transmit: function (command, headers, body) {
         this._transport.transmit(command, headers, body);
-    },
+    }
 
 }

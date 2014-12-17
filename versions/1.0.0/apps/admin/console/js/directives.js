@@ -7,17 +7,12 @@ loDirectives.directive('loNavbar', function () {
   return {
     restrict: 'E',
     replace: true,
-    templateUrl: '/admin/console/templates/lo-navbar.html',
+    templateUrl: '/admin/console/templates/lo-navbar.html'
   };
 });
 
 loDirectives.directive('loNavigation', function () {
   return {
-    scope: {
-      loCurrent: '@',
-      loApps: '=',
-      loApp: '='
-    },
     restrict: 'E',
     replace: true,
     templateUrl: '/admin/console/templates/lo-navigation.html'
@@ -83,8 +78,9 @@ loDirectives.directive('loStorageSummary', function (LoCollection) {
     replace: true,
     templateUrl: '/admin/console/templates/lo-storage-summary.html',
     link: function(scope){
-      LoCollection.getList({appId: scope.loApp.id, storageId: scope.storage.path}, function(){
-        scope.storage.hasCollections = true;
+      LoCollection.getList({appId: scope.loApp.id, storageId: scope.storage.path}, function(storage){
+        scope.storage.collections = storage.members;
+        scope.storage.hasCollections = true; // FIXME: wrong attribute name ?
       });
     }
   };
@@ -96,7 +92,7 @@ loDirectives.directive('appVersion', ['version', function(version) {
   };
 }]);
 
-/* Collapsible forms - Apply the lo-collapse attribute the the <legend> element. Aplly lo-collapse='true' to auto-hide
+/* Collapsible forms - Apply the lo-collapse attribute the the <legend> element. Apply lo-collapse='true' to auto-hide
    current form elements.
  */
 loDirectives.directive('loCollapse', function() {
@@ -109,7 +105,8 @@ loDirectives.directive('loCollapse', function() {
       element.addClass('clickable');
       var collapse = function(){
         element.toggleClass('collapsed');
-        element.parent().find('.form-group').toggleClass('hidden');
+        // TODO: vrockai, review.. trying to make it usable outside forms (see applications / examples)
+        element.nextAll().toggleClass('hidden');
       };
 
       if (scope.loCollapse){
@@ -213,7 +210,6 @@ loDirectives.directive('loSelect', function($timeout) {
       element.selectpicker();
 
       ngModel.$render = function() {
-        element.val(ngModel.$viewValue || '');
         $timeout(function() {
           element.selectpicker('refresh');
         },0,false);
@@ -256,16 +252,31 @@ loDirectives.directive('loHttpPrefix', function() {
   };
 });
 
-loDirectives.directive('loAutofocus', function($timeout) {
+loDirectives.directive('ngFileSelect', function() {
   return {
-    priority: 1,
-    link: function (scope, element) {
-      $timeout(function () {
-        var elems = element.find('[autofocus]');
-        if (elems && elems.length > 0) {
-          elems[0].focus();
-        }
-      }, 150);
+    link: function($scope,el){
+      el.bind('change', function(e){
+        $scope.file = (e.srcElement || e.target).files[0];
+        $scope.getFile();
+      });
+    }
+  };
+});
+
+/* Directive used to autoclose the advanced search pop-up when clicked outside the pop-up. */
+loDirectives.directive('loAutoclose', function($document, $compile) {
+  return {
+    link: function(scope, e, att){
+
+      var body = $document.find('body').eq(0);
+
+      scope.close = function() {
+        scope[att.ngShow] = false;
+      };
+
+      var backdrop = $compile('<div ng-if="' + att.ngShow + '" id="advancedBackdrop" ng-click="close()"></div>')(scope);
+
+      body.append(backdrop);
     }
   };
 });

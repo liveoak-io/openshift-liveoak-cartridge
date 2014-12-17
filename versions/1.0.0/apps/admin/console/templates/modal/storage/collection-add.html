@@ -1,20 +1,25 @@
-<form lo-autofocus>
+<form name="loCollectionCreate" id="loCollectionCreate" ng-init="setFormScope(this)" novalidate="">
   <div class="modal-header">
     <button type="button" class="close" ng-click="cancel()">
       <span class="pficon pficon-close"></span>
     </button>
-    <h4 class="modal-title">Create New Collection</h4>
+    <h4 class="modal-title">New Collection</h4>
   </div>
   <div class="modal-body">
     <div class="form-group clearfix">
-      <label for="collection-name" class="col-sm-3 control-label">Collection Name</label>
+      <label for="collectionName" class="col-sm-3 control-label">Collection Name</label>
       <div class="col-sm-7">
-        <input type="text" class="form-control" id="collection-name" ng-model="collectionName" autofocus>
+        <input type="text" class="form-control" id="collectionName" name="collectionName" ng-model="collectionName"
+               required pf-focused="true" pf-validation ng-change="checkColName(collectionName)"/>
+        <span class="help-block">
+          <span ng-show="loCollectionCreate.collectionName.$error.required">Collection name is required.</span>
+          <span ng-show="!loCollectionCreate.collectionName.$error.required && loCollectionCreate.collectionName.$error.collectionName">Collection name already exists.</span>
+        </span>
       </div>
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-default btn-lg" ng-click="cancel()">Cancel</button>
-    <button type="submit" class="btn btn-primary btn-lg" ng-click="collectionCreate(collectionName); close()" ng-disabled="!collectionName">Add</button>
+    <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+    <button type="submit" class="btn btn-primary" ng-click="collectionCreate(collectionName); close()" ng-disabled="!(collectionName && loCollectionCreate.$valid && loCollectionCreate.collectionName.$valid)">Create</button>
   </div>
 </form>

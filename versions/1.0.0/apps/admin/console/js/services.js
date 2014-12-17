@@ -2,108 +2,57 @@
 
 var loMod = angular.module('loApp.services', []).value('version', '0.1');
 
-loMod.factory('Notifications', function($rootScope, $timeout, $log) {
-  // time (in ms) the notifications are shown
-  var delay = 5000;
-
-  var notifications = {};
-
-  $rootScope.notifications = {};
-  $rootScope.notifications.data = [];
-
-  $rootScope.notifications.remove = function(index){
-    $rootScope.notifications.data.splice(index,1);
-  };
-
-  var scheduleMessagePop = function() {
-    $timeout(function() {
-      $rootScope.notifications.data.splice(0,1);
-    }, delay);
-  };
-
-  if (!$rootScope.notifications) {
-    $rootScope.notifications.data = [];
-  }
-
-  notifications.message = function(type, header, message) {
-    $rootScope.notifications.data.push({
-      type : type,
-      header: header,
-      message : message
-    });
-
-    scheduleMessagePop();
-  };
-
-  notifications.info = function(message) {
-    notifications.message('info', 'Info!', message);
-    $log.info(message);
-  };
-
-  notifications.success = function(message) {
-    notifications.message('success', 'Success!', message);
-    $log.info(message);
-  };
-
-  notifications.error = function(message) {
-    notifications.message('danger', 'Error!', message);
-    $log.error(message);
-  };
-
-  notifications.warn = function(message) {
-    notifications.message('warning', 'Warning!', message);
-    $log.warn(message);
-  };
-
-  notifications.httpError = function(message, httpResponse) {
-    message += ' (' + (httpResponse.data.message || httpResponse.data.cause || httpResponse.data.cause || httpResponse.data.errorMessage) + ')';
-    notifications.message('danger', 'Error!', message);
-    $log.error(message);
-  };
-
-  return notifications;
-});
-
-/* Loaders - Loaders are used in the route configuration as resolve parameters */
-loMod.factory('Loader', function($q) {
-  var loader = {};
-  loader.get = function(service, id) {
-    return function() {
-      var i = id && id();
-      var delay = $q.defer();
-      service.get(i, function(entry) {
-        delay.resolve(entry);
-      }, function() {
-        delay.reject('Unable to fetch ' + i);
+/*
+  FileReader service, taken from:
+  http://odetocode.com/blogs/scott/archive/2013/07/03/building-a-filereader-service-for-angularjs-the-service.aspx
+ */
+loMod.factory('FileReader', function($q) {
+  var onLoad = function(reader, deferred, scope) {
+    return function () {
+      scope.$apply(function () {
+        deferred.resolve(reader.result);
       });
-      return delay.promise;
     };
   };
-  loader.getList = function(service, id) {
-    return function() {
-      var i = id && id();
-      var delay = $q.defer();
-      service.getList(i, function(entry) {
-        delay.resolve(entry);
-      }, function() {
-        delay.reject('Unable to fetch ' + i);
+
+  var onError = function (reader, deferred, scope) {
+    return function () {
+      scope.$apply(function () {
+        deferred.reject(reader.result);
       });
-      return delay.promise;
     };
   };
-  loader.query = function(service, id) {
-    return function() {
-      var i = id && id();
-      var delay = $q.defer();
-      service.query(i, function(entry) {
-        delay.resolve(entry);
-      }, function() {
-        delay.reject('Unable to fetch ' + i);
-      });
-      return delay.promise;
+
+  var onProgress = function(reader, scope) {
+    return function (event) {
+      scope.$broadcast('fileProgress',
+        {
+          total: event.total,
+          loaded: event.loaded
+        });
     };
   };
-  return loader;
+
+  var getReader = function(deferred, scope) {
+    var reader = new FileReader();
+    reader.onload = onLoad(reader, deferred, scope);
+    reader.onerror = onError(reader, deferred, scope);
+    reader.onprogress = onProgress(reader, scope);
+    return reader;
+  };
+
+  var readAsDataURL = function (file, scope) {
+    var deferred = $q.defer();
+
+    var reader = getReader(deferred, scope);
+    reader.readAsText(file);
+
+    return deferred.promise;
+  };
+
+  return {
+    readAsDataUrl: readAsDataURL
+  };
 });
 
 loMod.factory('LoStorage', function($resource) {
@@ -116,7 +65,7 @@ loMod.factory('LoStorage', function($resource) {
     },
     getList : {
       method : 'GET',
-      params: { expand : 'members' }
+      params: { fields : '*(*)' }
     },
     create : {
       method : 'POST',
@@ -129,19 +78,32 @@ loMod.factory('LoStorage', function($resource) {
     delete : {
       method : 'DELETE',
       params : { appId : '@appId', storageId : '@storageId'}
+    },
+    getDatastores : {
+      method : 'GET',
+      url: '/admin/system/mongo',
+      params: { fields : '*(*)' }
     }
   });
 });
 
 loMod.factory('LoCollection', function($resource) {
-  return $resource('/:appId/:storageId/:collectionId?expand=members', {
+  return $resource('/:appId/:storageId/:collectionId', {
     appId : '@appId',
     storageId : '@storageId',
     collectionId : '@collectionId'
   }, {
+    check : {
+      method : 'GET',
+      params: { appId : '@appId', storageId : '@storageId', collectionId: '@collectionId' }
+    },
+    get : {
+      method : 'GET',
+      params: { appId : '@appId', storageId : '@storageId', collectionId: '@collectionId', fields : '*(*)' }
+    },
     getList : {
       method : 'GET',
-      params: { expand : 'members' }
+      params: { fields : '*(*)' }
     },
     create : {
       method : 'POST',
@@ -170,7 +132,7 @@ loMod.factory('LoCollectionItem', function($resource) {
     },
     getList : {
       method : 'GET',
-      params: { appId : '@appId', storageId : '@storageId', collectionId: '@collectionId', expand : 'members' }
+      params: { appId : '@appId', storageId : '@storageId', collectionId: '@collectionId', fields : '*(*)' }
     },
     create : {
       method : 'POST',
@@ -196,7 +158,7 @@ loMod.factory('LoApp', function($resource) {
     },
     getList : {
       method : 'GET',
-      params: { expand : 'members' }
+      params: { fields : '*(*)' }
     },
     create : {
       method : 'POST',
@@ -213,61 +175,64 @@ loMod.factory('LoApp', function($resource) {
   });
 });
 
-loMod.factory('LoStorageLoader', function(Loader, LoStorage, $route) {
-  return Loader.get(LoStorage, function() {
-    return {
+loMod.factory('LoStorageLoader', function(LoStorage, $route) {
+  return function() {
+    return LoStorage.get({
       appId : $route.current.params.appId,
       storageId: $route.current.params.storageId
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoStorageListLoader', function(Loader, LoStorage, $route) {
-  return Loader.getList(LoStorage, function() {
-    return {
+loMod.factory('LoStorageListLoader', function(LoStorage, $route) {
+  return function() {
+    return LoStorage.getList({
       appId : $route.current.params.appId
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoCollectionListLoader', function(Loader, LoCollection, $route) {
-  return Loader.get(LoCollection, function() {
-    return {
-      appId : $route.current.params.appId,
-      storageId : $route.current.params.storageId
-    };
-  });
+loMod.factory('LoCollectionListLoader', function(LoCollection, $route) {
+  return function() {
+    return LoCollection.get({
+      appId: $route.current.params.appId,
+      storageId: $route.current.params.storageId
+    }).$promise;
+  };
 });
 
-loMod.factory('LoPushLoader', function(Loader, LoPush, $route) {
-  return Loader.get(LoPush, function() {
-      return {
+loMod.factory('LoPushLoader', function(LoPush, $route, $log) {
+  return function() {
+    return LoPush.get({
         appId : $route.current.params.appId
-      };
-    },
-    function(httpResponse) {
-      console.log(httpResponse);
-      return {
-        appId : $route.current.params.appId
-      };
-    }
-  );
+      },
+      function(httpResponse) {
+        $log.error(httpResponse);
+        return {
+          appId : $route.current.params.appId
+        };
+      }).$promise;
+  };
 });
 
-loMod.factory('LoAppLoader', function(Loader, LoApp, $route) {
-  return Loader.get(LoApp, function() {
-    return {
+loMod.factory('LoAppLoader', function(LoApp, $route) {
+  return function() {
+    return LoApp.get({
       appId : $route.current.params.appId
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoAppListLoader', function(Loader, LoApp) {
-  return Loader.getList(LoApp);
+loMod.factory('LoAppListLoader', function(LoApp) {
+  return function() {
+    return LoApp.getList().$promise;
+  };
 });
 
-loMod.factory('LoCollectionLoader', function(Loader, LoCollection) {
-  return Loader.get(LoCollection);
+loMod.factory('LoCollectionLoader', function(LoCollection) {
+  return function() {
+    return LoCollection.get().$promise;
+  };
 });
 
 loMod.factory('LoPush', function($resource) {
@@ -294,8 +259,8 @@ loMod.factory('LoPush', function($resource) {
   });
 });
 
-loMod.factory('LoRealmApp', function($resource) {
-  return $resource('/auth/admin/realms/:realmId/applications/:appId', {
+loMod.factory('LoRealmApp', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/applications/:appId', {
     realmId : 'liveoak-apps',
     appId: '@appId'
   }, {
@@ -304,90 +269,113 @@ loMod.factory('LoRealmApp', function($resource) {
     },
     create: {
       method: 'POST'
+    },
+    delete: {
+      method: 'DELETE'
     }
   });
 });
 
-loMod.factory('LoRealmAppRoles', function($resource) {
-  return $resource('/auth/admin/realms/:realmId/applications/:appId/roles/:roleName', {
+loMod.factory('LoRealmAppRoles', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/applications/:appId/roles/:roleName', {
     realmId : 'liveoak-apps',
     appId: '@appId',
     roleName: '@roleName'
   });
 });
 
-loMod.factory('LoRealmRoles', function($resource) {
-  return $resource('/auth/admin/realms/:realmId/roles', {
+loMod.factory('LoRealmRoles', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/roles', {
     realmId : 'liveoak-apps'
   });
 });
 
-loMod.factory('LoRealmClientRoles', function($resource) {
-  return $resource('/auth/admin/realms/:realmId/applications/:appId/scope-mappings/realm', {
+loMod.factory('LoRealmClientRoles', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/applications/:appId/scope-mappings/realm', {
     realmId: 'liveoak-apps',
     appId: '@appId'
   });
 });
 
-loMod.factory('LoRealmAppClientScopeMapping', function($resource) {
-  return $resource('/auth/admin/realms/:realmId/applications/:clientId/scope-mappings/applications/:appId', {
+loMod.factory('LoRealmAppClientScopeMapping', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/applications/:clientId/scope-mappings/applications/:appId', {
     realmId: 'liveoak-apps',
     appId : '@appId',
     clientId : '@clientId'
   });
 });
 
-loMod.factory('LoRealmAppClientScopeMappingLoader', function(Loader, LoRealmAppClientScopeMapping, $route) {
-  return Loader.query(LoRealmAppClientScopeMapping, function() {
-    return {
+loMod.factory('LoRealmAppClientScopeMappingLoader', function(LoRealmAppClientScopeMapping, $route) {
+  return function(){
+    return LoRealmAppClientScopeMapping.query({
       realmId: 'liveoak-apps',
       appId: $route.current.params.appId,
       clientId: $route.current.params.clientId
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoRealmAppLoader', function(Loader, LoRealmApp, $route) {
-  return Loader.get(LoRealmApp, function() {
-    return {
+loMod.factory('LoRealmAppLoader', function(LoRealmApp, $route) {
+  return function(){
+    return LoRealmApp.get({
       realmId: 'liveoak-apps',
       appId : $route.current.params.appId
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoRealmRolesLoader', function(Loader, LoRealmRoles) {
-  return Loader.query(LoRealmRoles, function() {
-    return {
+loMod.factory('LoRealmRolesLoader', function(LoRealmRoles) {
+  return function(){
+    return LoRealmRoles.query({
       realmId: 'liveoak-apps'
-    };
-  });
+    }).$promise;
+  };
 });
 
-loMod.factory('LoRealmAppListLoader', function(Loader, LoRealmApp) {
-  return Loader.query(LoRealmApp, function() {
-    return {
+loMod.factory('LoRealmAppListLoader', function(LoRealmApp) {
+  return function(){
+    return LoRealmApp.query({
       realmId: 'liveoak-apps'
-    };
+    }).$promise;
+  };
+});
+
+loMod.factory('LoRealmAppRolesLoader', function(LoRealmAppRoles, $route) {
+  return function(){
+    return LoRealmAppRoles.query({
+      realmId: 'liveoak-apps',
+      appId : $route.current.params.appId
+    }).$promise;
+  };
+});
+
+loMod.factory('LoRealmClientRolesLoader', function(LoRealmClientRoles, $route) {
+  return function(){
+    return LoRealmClientRoles.query({
+      realmId: 'liveoak-apps',
+      appId : $route.current.params.appId
+    }).$promise;
+  };
+});
+
+
+loMod.factory('LoSecurityCollections', function($resource) {
+  return $resource('/:appId', {
+    appId : '@appId'
+  }, {
+    get : {
+      method: 'GET',
+      params: { fields : '*(*)' }
+    }
   });
 });
 
-loMod.factory('LoRealmAppRolesLoader', function(Loader, LoRealmAppRoles, $route) {
-  return Loader.query(LoRealmAppRoles, function() {
-    return {
-      realmId: 'liveoak-apps',
+loMod.factory('LoSecurityCollectionsLoader', function(LoSecurityCollections, $route) {
+  return function(){
+    return LoSecurityCollections.get({
       appId : $route.current.params.appId
-    };
-  });
-});
-
-loMod.factory('LoRealmClientRolesLoader', function(Loader, LoRealmClientRoles, $route) {
-  return Loader.query(LoRealmClientRoles, function() {
-    return {
-      realmId: 'liveoak-apps',
-      appId : $route.current.params.appId
-    };
-  });
+    }).$promise;
+  };
 });
 
 loMod.factory('LoSecurity', function($resource) {
@@ -403,12 +391,12 @@ loMod.factory('LoSecurity', function($resource) {
   });
 });
 
-loMod.factory('LoSecurityLoader', function(Loader, LoSecurity, $route) {
-  return Loader.get(LoSecurity, function() {
-    return {
+loMod.factory('LoSecurityLoader', function(LoSecurity, $route) {
+  return function(){
+    return LoSecurity.get( {
       appId : $route.current.params.appId
-    };
-  });
+    }).$promise;
+  };
 });
 
 loMod.factory('LoACL', function($resource) {
@@ -424,10 +412,405 @@ loMod.factory('LoACL', function($resource) {
   });
 });
 
-loMod.factory('LoACLLoader', function(Loader, LoACL, $route) {
-  return Loader.get(LoACL, function() {
-    return {
+loMod.factory('LoACLLoader', function(LoACL, $route) {
+  return function(){
+    return LoACL.get({
       appId : $route.current.params.appId
-    };
+    }).$promise;
+  };
+});
+
+loMod.factory('LoRealmUsers', function($resource, LiveOak) {
+  return $resource(LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/users/:userId', {
+    realmId : 'liveoak-apps',
+    userId : '@userId'
+  }, {
+    resetPassword : {
+      method: 'PUT',
+      url: LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/users/:userId/reset-password'
+    },
+    addRoles : {
+      method: 'POST',
+      url: LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/users/:userId/role-mappings/applications/:appId'
+    },
+    deleteRoles : {
+      method: 'DELETE',
+      url: LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/users/:userId/role-mappings/applications/:appId'
+    },
+    getRoles: {
+      method: 'GET',
+      url: LiveOak.getAuthServerUrl() + '/admin/realms/:realmId/users/:userId/role-mappings/applications/:appId/composite',
+      isArray: true
+    },
+    update: {
+      method: 'PUT'
+    }
   });
+});
+
+loMod.factory('LoRealmUserLoader', function(LoRealmUsers, $route) {
+  return function(){
+    return LoRealmUsers.get({
+      userId : $route.current.params.userId
+    }).$promise;
+  };
+});
+
+loMod.factory('LoAppExamples', function($resource) {
+  return $resource('/admin/console/resources/example-applications.json',
+    {},
+    {
+      get: {
+        method: 'GET',
+        url: '/admin/console/resources/liveoak-examples/:parentId/:exampleId/application.json'
+      },
+      install: {
+        method : 'POST',
+        url: '/admin/applications/',
+        headers: {
+          'Content-Type':'application/vnd.liveoak.local-app+json'
+        }
+      },
+      importGit: {
+        method : 'POST',
+        url: '/admin/applications/',
+        headers: {
+          'Content-Type':'application/vnd.liveoak.git-app+json'
+        }
+      }
+    });
+});
+
+loMod.factory('LoClient', function($resource) {
+  return $resource('/admin/applications/:appId/resources/application-clients/:clientId', {
+    appId : '@appId',
+    clientId: '@clientId'
+  }, {
+    get : {
+      method : 'GET'
+    },
+    getList : {
+      method : 'GET',
+      params : { fields: '*(*)' }
+    },
+    update : {
+      method : 'PUT'
+    },
+    create : {
+      method : 'POST',
+      params : { appId : '@appId' }
+    },
+    createResource : {
+      method : 'POST',
+      url : '/admin/applications/:appId/resources',
+      params : { appId : '@appId' }
+    },
+    getResource : {
+      method : 'GET',
+      url: '/admin/applications/:appId/resources/application-clients',
+      params : { appId : '@appId' }
+    },
+    delete : {
+      method : 'DELETE'
+    }
+  });
+});
+
+loMod.factory('loPushPing', function($resource) {
+  return function(url){
+    return $resource(url, {}, {
+      ping : {
+        method : 'GET'
+      }
+    });
+  };
+});
+
+loMod.factory('LoBusinessLogicScripts', function($resource) {
+  return $resource('/admin/applications/:appId/resources/scripts/:type/:scriptId', {
+    appId : '@appId'
+  }, {
+    get : {
+      method : 'GET',
+      params : { fields: '*(*)' }
+    },
+    create: {
+      method: 'POST'
+    },
+    update: {
+      method: 'PUT'
+    },
+    getResource : {
+      method : 'GET',
+      url: '/admin/applications/:appId/resources/scripts/'
+    },
+    createResource : {
+      method : 'PUT',
+      url: '/admin/applications/:appId/resources/scripts',
+      params : { appId : '@appId'}
+    },
+    getSource : {
+      method : 'GET',
+      url: '/admin/applications/:appId/resources/scripts/:type/:scriptId/script'
+    },
+    setSource: {
+      method: 'POST',
+      headers: {
+        'Content-Type':'application/javascript'
+      }
+    }
+  });
+});
+
+loMod.service('loLiveLoader', function($q, $rootScope, $cacheFactory, loLiveSubscribe){
+
+  var liveCache = $cacheFactory('loLiveCache');
+
+  function interpretParameters(parameters){
+    var i;
+
+    if (parameters && angular.isFunction(parameters)) {
+      i = parameters();
+    } else if (parameters){
+      i = parameters;
+    } else {
+      i = {};
+    }
+
+    return i;
+  }
+
+  return function(resourceMethod, subscribeUrl, parameters){
+
+    var i = interpretParameters(parameters);
+
+    var defered = $q.defer(),
+      cacheKey = subscribeUrl+':'+i,
+      cachedObject = liveCache.get(cacheKey);
+
+    if(cachedObject){
+      defered.resolve(cachedObject);
+      return defered.promise;
+    }
+
+    var resource = resourceMethod(i),
+      deferedLive = $q.defer(),
+      output = {
+        resource: resource,
+        callbacks: resourceMethod.callbacks,
+        subscribeUrl: subscribeUrl,
+        parameters: i,
+        live: deferedLive.promise
+      };
+
+    resource.$promise.then(function(data) {
+      deferedLive.resolve(angular.copy(data));
+      output.subscribeId = loLiveSubscribe(output);
+      return output.subscribeId;
+    }).then(function(data){
+      output.subscribeId = data;
+      return deferedLive.promise;
+    }).then(function(data){
+      angular.extend(output.live, data);
+      defered.resolve(output);
+      liveCache.put(cacheKey, output);
+      return output.live.$promise;
+    });
+
+    return defered.promise;
+  };
+});
+
+loMod.factory('loLiveSubscribe', function($resource, LiveOak, $rootScope, $q) {
+  return function(liveObject){
+
+    var delay = $q.defer(),
+        callbacks = liveObject.callbacks;
+
+    function _callback(){
+      delay.resolve(LiveOak.subscribe(liveObject.subscribeUrl, function (data, action) {
+        $rootScope.$apply(function(){
+          if (callbacks[action]) {
+            liveObject.live.$promise.then(function(){
+              callbacks[action](data, liveObject.live);
+            });
+          }
+        });
+      }));
+    }
+
+    LiveOak.auth.updateToken(5).success(function() {
+      LiveOak.connect('Bearer', LiveOak.auth.token, _callback);
+    }).error(function() {
+      LiveOak.connect(_callback);
+    });
+
+    return delay.promise;
+  };
+});
+
+loMod.factory('LoLiveCollectionList', function($resource) {
+  var res = $resource('/:appId/:storageId', {
+    appId : '@appId',
+    storageId : '@storageId'
+  }, {
+    get : {
+      method : 'GET'
+    }
+  });
+
+  res.get.callbacks = {
+    create: function (data, liveObject) {
+      if(!liveObject.members) {
+        liveObject.members = [];
+      }
+
+      liveObject.members.push(data);
+    },
+    delete: function (data, liveObject) {
+      if(!liveObject.members) {
+        return liveObject;
+      }
+
+      for(var i = 0; i < liveObject.members.length; i++){
+        if (data.id === liveObject.members[i].id) {
+          liveObject.members.splice(i, 1);
+          break;
+        }
+      }
+    }
+  };
+
+  return res;
+});
+
+loMod.factory('LoLiveAppList', function($resource) {
+
+  var res = $resource('/admin/applications/', {}, {
+    getList: {
+      method: 'GET',
+      params: { fields: '*(*)' }
+    }
+  });
+
+  res.getList.callbacks = {
+    create: function (data, liveObject) {
+      if(!liveObject.members) {
+        liveObject.members = [];
+      }
+
+      liveObject.members.push(data);
+    },
+    delete: function (data, liveObject) {
+      if(!liveObject.members) {
+        return;
+      }
+
+      for(var i = 0; i < liveObject.members.length; i++){
+        if (data.id === liveObject.members[i].id) {
+          liveObject.members.splice(i, 1);
+          break;
+        }
+      }
+    }
+  };
+
+  return res;
+});
+
+loMod.provider('loRemoteCheck', function() {
+
+  this.delay = 300;
+
+  this.setDelay = function(customDelay) {
+    this.delay = customDelay;
+  };
+
+  this.$get = ['$rootScope', '$timeout', '$log', function($rootScope, $timeout) {
+
+    var delay = this.delay;
+
+    return function (timeoutPointer, resourceMethod, resourceParameters, callbacks) {
+
+      if (timeoutPointer){
+        $timeout.cancel(timeoutPointer);
+      }
+
+      var timeoutId = $timeout(function(){
+        resourceMethod(resourceParameters, function(data){
+          if (callbacks.success){
+            callbacks.success(data);
+          }
+        }, function(error){
+          if (callbacks.error){
+            callbacks.error(error);
+          }
+        });
+      }, delay);
+
+      return timeoutId;
+    };
+  }];
+});
+
+loMod.service('loJSON', function() {
+
+  this.toStringObject = function(jsonObject){
+    var stringObject = {};
+
+    for(var key in jsonObject){
+      var dType = typeof jsonObject[key];
+      if (dType === 'string'){
+        stringObject[key] = '"' + jsonObject[key] + '"';
+      } else {
+        stringObject[key] = angular.toJson(jsonObject[key]);
+      }
+    }
+
+    return stringObject;
+  };
+
+  this.parseJSON = function(stringObject){
+    var jsonObject = {};
+
+    // The doubled casting is to trim off angular stuff like the $$hashKey from properties
+    for(var key in angular.fromJson(angular.toJson(stringObject))){
+
+      var value = stringObject[key];
+
+      // If the value is empty then ignore
+      if(value === '') {
+        // If it's a string
+      } else if (value[0] === '"' && value[value.length - 1] === '"') {
+        jsonObject[key] = value.substr(1, value.length - 2);
+        // If it's a numbers
+      } else if (!isNaN(value)) {
+        jsonObject[key] = parseFloat(value);
+        // If it's a boolean
+      } else if (value === 'true' || value === 'false') {
+        jsonObject[key] = (value === 'true');
+        // If it's null
+      } else if (value === 'null') {
+        jsonObject[key] = null;
+      } else {
+        jsonObject[key] = JSON.parse(value);
+      }
+    }
+
+    return jsonObject;
+  };
+
+  this.isValidJSON = function(jsonObject) {
+
+    var valid = true;
+    try {
+      // The function is false only in case of error
+      JSON.parse(jsonObject);
+    } catch(e) {
+      valid = false;
+    }
+
+    return valid;
+  };
+
 });
