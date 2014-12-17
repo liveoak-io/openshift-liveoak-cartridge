@@ -11,6 +11,9 @@
                     interceptor-name: 'timing-http'
                 },
                 {
+                    interceptor-name: 'https-redirect'
+                },
+                {
                     interceptor-name: 'auth'
                 },
                 {
@@ -20,6 +23,9 @@
                 },
                 {
                     interceptor-name: 'acl-updater'
+                },
+                {
+                    interceptor-name: 'script-interceptor'
                 }
             ]
     }

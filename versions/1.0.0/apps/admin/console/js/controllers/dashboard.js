@@ -2,22 +2,24 @@
 
 var loMod = angular.module('loApp.controllers.dashboard', []);
 
-loMod.controller('DashboardCtrl', function($scope, $rootScope, $routeParams, $filter, currentApp, loStorageList) {
+loMod.controller('DashboardCtrl', function($scope, $rootScope, $routeParams, $filter, $location, currentApp, loStorageList) {
 
   $rootScope.curApp = currentApp;
+
+  $scope.appUrl = $location.protocol() + '://' + $location.host() + ':' + $location.port() + '/' + currentApp.id + '/';
 
   $scope.storageList = [];
 
   /* jshint unused: false */
-  angular.forEach(loStorageList._members, function(value, key) {
+  angular.forEach(loStorageList.members, function(value, key) {
     if (value.hasOwnProperty('db')) {
       this.push(value.id);
     }
   }, $scope.storageList);
   /* jshint unused: true */
 
-  var pushEntries = $filter('filter')(loStorageList._members, {'id': 'push'});
-  $scope.pushConfig = pushEntries.length > 0 ? pushEntries[0] : undefined;
+  var pushEntries = $filter('filter')(loStorageList.members, {'id': 'push'});
+  $scope.pushConfig = pushEntries && pushEntries.length > 0 ? pushEntries[0] : undefined;
 
   $scope.breadcrumbs = [
     {'label': 'Applications',  'href':'#/applications'},

@@ -1,133 +1,111 @@
-<div class="row">
-  <ul class="nav nav-tabs nav-tabs-pf">
-    <li><a href="#/applications/{{curApp.id}}/application-settings">General Settings</a></li>
-    <li class="active"><a href="#/applications/{{curApp.id}}/application-clients">Clients</a></li>
-  </ul>
-  <div class="lo-content-area col-md-10 next-steps">
+<div class="col-md-10 lo-main-pane application-client">
 
-    <lo-breadcrumbs></lo-breadcrumbs>
-    <h2 class="pull-left"><span>{{ appClient.name || 'New Client' }}</span> Configuration</h2>
-    <p class="subtitle">All fields are required</p>
+  <div class="row">
+    <div class="lo-content-area col-md-12">
+  
+      <lo-breadcrumbs></lo-breadcrumbs>
+      <h2 class="pull-left"><span>{{ appClient.name|clientname:curApp.id || 'New Client' }}</span> Configuration</h2>
 
-    <hr>
+      <hr>
 
-    <form class="lo-form-horizontal clearfix">
-      <fieldset>
-        <div class="form-group clearfix">
-          <label class="col-sm-2 control-label" for="clientname">Client Name</label>
-          <div class="col-sm-4">
-            <input class="form-control" type="text" id="clientname" ng-model="settings.name" required autofocus >
+      <form class="lo-form-horizontal clearfix" name="clientsForm">
+        <fieldset>
+          <div class="form-group clearfix">
+            <label class="col-sm-2 control-label" for="clientname" required>Client Name <span class="required">*</span></label>
+            <div class="col-sm-4" ng-class="{'has-error': clientsForm.clientname.$invalid && settings.name}">
+              <input class="form-control" type="text" id="clientname" name="clientname" ng-model="settings.displayName" required
+                     pf-focused="!settings.name" ng-change="checkClientName(settings.displayName)"/>
+              <span class="help-block" ng-show="clientsForm.clientname.$invalid && settings.displayName">
+                <span>Client with this name already exists.</span>
+              </span>
+            </div>
           </div>
-        </div>
-        <div class="form-group clearfix">
-          <label class="col-sm-2 control-label" for="platform">Platform</label>
-          <div class="lo-instances col-sm-offset-2">
-            <label class="checkbox-inline html5" ng-class="{'active': settings.platform == 'html5'}">
-              <input type="radio" name="platform" ng-model="settings.platform" value="html5"> HTML 5
-            </label>
-            <label class="checkbox-inline android" ng-class="{'active': settings.platform == 'android'}">
-              <input type="radio" name="platform" ng-model="settings.platform" value="android"> Android
-            </label>
-            <label class="checkbox-inline ios" ng-class="{'active': settings.platform == 'ios'}">
-              <input type="radio" name="platform" ng-model="settings.platform" value="ios"> iOS
-            </label>
-            <label class="checkbox-inline custom" ng-class="{'active': settings.platform == 'custom'}">
-              <input type="radio" name="platform" ng-model="settings.platform" value="custom"> My Platform
-            </label>
-            <span data-tooltip-placement="top" data-tooltip="Add Platform">
-              <button type="button" class="btn btn-link btn-icon inline add-condition" data-toggle="modal" data-target="#add-platform"><i class="fa fa-plus-circle"></i><span>Add Platform</span></button>
-            </span>
+          <div class="form-group clearfix">
+            <label class="col-sm-2 control-label" for="platform">Platform</label>
+            <div class="lo-instances col-sm-offset-2">
+              <label class="checkbox-inline html5" ng-class="{'active': settings.type == 'html5'}">
+                <input type="radio" name="platform" ng-model="settings.type" value="html5"> HTML 5
+              </label>
+              <label class="checkbox-inline android" ng-class="{'active': settings.type == 'android'}">
+                <input type="radio" name="platform" ng-model="settings.type" value="android"> Android
+              </label>
+              <label class="checkbox-inline ios" ng-class="{'active': settings.type == 'ios'}">
+                <input type="radio" name="platform" ng-model="settings.type" value="ios"> iOS
+              </label>
+              <label ng-repeat="platform in platformsCustom" class="checkbox-inline custom"
+                     ng-class="{'active': settings.type == platform}">
+                <input type="radio" name="platform" ng-model="settings.type" value="{{platform||'Custom'}}">{{platform||'Custom'}}
+              </label>
+              <span data-tooltip-placement="top" data-tooltip="Add Platform">
+                <button type="button" class="btn btn-link btn-icon inline add-condition" ng-click="modalPlatformAdd()">
+                  <i class="fa fa-plus-circle"></i><span>Add Platform</span></button>
+              </span>
+            </div>
           </div>
-        </div>
-        <div class="form-group multiple clearfix" data-ng-show="!appClient.bearerOnly">
-          <label class="col-sm-2 control-label" for="newRedirectUri">Redirect URIs</label>
-          <div class="col-sm-4" ng-repeat="redirectUri in settings.redirectUris" class="row">
-            <div class="col-sm-12" style="padding: 0;">
-              <div class="input-group">
-                <input class="form-control" type="text" name="redirectUri" id="redirectUri" data-ng-model="redirectUri" readonly />
-                <div class="input-group-btn">
-                  <button class="btn btn-default" type="button" data-ng-click="deleteRedirectUri($index)"><i class="fa fa-trash-o"></i></button>
+          <div class="form-group multiple clearfix hover-menu" data-ng-show="!appClient.bearerOnly">
+            <label class="col-sm-2 control-label" for="newRedirectUri">Redirect URIs <span class="required">*</span></label>
+            <div class="col-sm-4 row" ng-repeat="redirectUri in redirectUris">
+              <div class="col-sm-12">
+                <input class="form-control" type="text" name="newRedirectUri" id="newRedirectUri"
+                       placeholder="New Redirect URI..." data-ng-model="redirectUri.val"
+                       required/>
+
+                <div class="input-group-client">
+                  <button type="button" class="btn btn-link btn-icon" ng-show="redirectUris.length > 1"
+                          data-ng-click="deleteRedirectUri($index)">
+                    <i class="fa fa-trash-o" data-tooltip-placement="top" data-tooltip="Remove URI"></i>
+                  </button>
+
+                  <button type="button" class="btn btn-link btn-icon" ng-click="addRedirectUri()"
+                          ng-show="$last && redirectUri.val && redirectUri.val !== ''" ng-disabled="!redirectUri">
+                    <i class="fa fa-plus-circle" data-tooltip-placement="top" data-tooltip="Add URI"></i>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-sm-4">
-            <div class="col-sm-12" style="padding: 0;">
-              <div  ng-class="{'input-group': newRedirectUri.length > 0}">
-                <input class="form-control" type="text" id="newRedirectUri" name="newRedirectUri" ng-model="newRedirectUri" placeholder="New redirect URI..."/>
-                <div class="input-group-btn" ng-show="newRedirectUri.length > 0">
-                  <button class="btn btn-primary" data-ng-click="addRedirectUri()" >Add</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="form-group multiple clearfix">
-          <label class="col-sm-2 control-label" for="newRedirectUri">Web Origins</label>
-          <div class="col-sm-4" ng-repeat="webOrigin in settings.webOrigins" class="row">
-            <div class="col-sm-12" style="padding: 0;">
-              <div class="input-group">
-                <input class="form-control" type="text" name="redirectUri" id="webOrigin" data-ng-model="webOrigin" readonly />
-                <div class="input-group-btn">
-                  <button class="btn btn-default" type="button" data-ng-click="deleteWebOrigin($index)"><i class="fa fa-trash-o"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-4">
-            <div class="col-sm-12" style="padding: 0;">
-              <div  ng-class="{'input-group': newWebOrigin.length > 0}">
-                <input class="form-control" type="text" id="newWebOrigin" name="newWebOrigin" ng-model="newWebOrigin" placeholder="New Web Origin..."/>
-                <div class="input-group-btn" ng-show="newWebOrigin.length > 0">
-                  <button class="btn btn-primary" data-ng-click="addWebOrigin()" >Add</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="form-group clearfix">
-          <label class="col-sm-2 control-label" for="scope">Scope</label>
-          <div class="col-sm-4">
-            <select lo-select id="scope" ng-options="role.id as role.name for role in availableRoles" ng-model="settings.scopeMappings" multiple>
-            </select>
-          </div>
-        </div>
-      </fieldset>
-      <div class="pull-right form-actions">
-        <button class="btn btn-default btn-lg" ng-disabled="!changed" type="button" ng-click="clear()">Clear changes</button>
-        <button class="btn btn-primary btn-lg" ng-disabled="!changed" type="submit" ng-click="save()">Save</button>
-      </div>
-    </form>
-  </div>
+          <div class="form-group multiple clearfix hover-menu">
+            <label class="col-sm-2 control-label" for="newWebOrigin">Web Origins</label>
+            <div class="col-sm-4 row" ng-repeat="webOrigin in webOrigins">
+              <div class="col-sm-12">
+                <input class="form-control" type="text" name="webOrigin" id="webOrigin"
+                       placeholder="New Web Origin..." data-ng-model="webOrigin.val"
+                       pf-validation="checkUrl(webOrigin.val)" />
 
-</div>
+                <span class="help-block">
+                  <span>Value must match this format: protocol://host[:port].</span>
+                </span>
 
-<!-- Add Platform Modal -->
-<div class="modal fade" id="add-platform" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-          <span class="pficon pficon-close"></span>
-        </button>
-        <h4 class="modal-title">Add Platform</h4>
-      </div>
-      <form class="horizontal-form">
-        <div class="modal-body">
-          <fieldset>
-            <div class="form-group clearfix">
-              <label for="pfname" class="col-sm-3 control-label">Platform Name <span class="required">*</span></label>
-              <div class="col-sm-7">
-                <input type="text" class="form-control" id="pfname">
+                <div class="input-group-client">
+                  <button type="button" class="btn btn-link btn-icon" ng-show="webOrigins.length > 1"
+                          data-ng-click="deleteWebOrigin($index)">
+                    <i class="fa fa-trash-o" data-tooltip-placement="top" data-tooltip="Remove URI"></i>
+                  </button>
+
+                  <button type="button" class="btn btn-link btn-icon" ng-click="addWebOrigin(webOrigin)"
+                          ng-show="$last && webOrigin.val && webOrigin.val !== ''" ng-disabled="!webOrigin">
+                    <i class="fa fa-plus-circle" data-tooltip-placement="top" data-tooltip="Add URI"></i>
+                  </button>
+                </div>
               </div>
             </div>
-          </fieldset>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default btn-lg" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary btn-lg" data-dismiss="modal">Add</button>
+          </div>
+          <div class="form-group clearfix">
+            <label class="col-sm-2 control-label" for="scope">Scope</label>
+            <div class="col-sm-4">
+              <select pf-select id="scope" ng-options="role.id as role.name for role in availableRoles" ng-model="settings.scopeMappings" ng-hide="availableRoles.length === 0" multiple>
+              </select>
+              <select pf-select id="scope-noroles" ng-options="role as role for role in noRoles" ng-model="noRoles" ng-show="availableRoles.length === 0" multiple disabled>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+        <div class="pull-right form-actions">
+          <button class="btn btn-default btn-lg" ng-disabled="!changed || clientsForm.$invalid || !settings.displayName" type="button" ng-click="clear()">Clear changes</button>
+          <button class="btn btn-primary btn-lg" ng-disabled="!changed || clientsForm.$invalid || !settings.displayName" type="submit" ng-click="save()">Save</button>
         </div>
       </form>
     </div>
   </div>
 </div>
+  

@@ -2,7 +2,7 @@
 
 var loMod = angular.module('loApp.controllers.global', []);
 
-loMod.controller('GlobalCtrl', function($log, $rootScope, $scope, $location, LiveOak) {
+loMod.controller('GlobalCtrl', function($log, $rootScope, $scope, $location, $route, LiveOak) {
 
   $log.debug('GlobalCtrl' + LiveOak);
 
@@ -12,6 +12,19 @@ loMod.controller('GlobalCtrl', function($log, $rootScope, $scope, $location, Liv
       $log.error('failed to change routes');
       $location.path('/error');
     });
+
+  // to avoid initial flashing of sidebar on non-sidebar pages
+  $rootScope.hideSidebar = true;
+
+  // originalPath is used to calculate the sidebar active element
+  $rootScope.$on('$locationChangeSuccess', function() {
+    $rootScope.oPath = $route.current.$$route.originalPath;
+  });
+
+  // so that it shows back when switching from non-sidebar to sidebar pages
+  $rootScope.$on('$routeChangeSuccess', function() {
+    delete $rootScope.hideSidebar;
+  });
 
   /* jshint ignore:start */
   $scope.auth = LiveOak.auth;
@@ -46,18 +59,21 @@ loMod.controller('GlobalCtrl', function($log, $rootScope, $scope, $location, Liv
 
 });
 
-loMod.controller('HomeCtrl', function($log, $rootScope, $scope, $location, $filter, loAppList) {
-  var filtered = $filter('filter')(loAppList._members, {'visible': true});
-  if (filtered.length === 1) {
-    $location.url('/applications/' + filtered[0].id);
-  }
-  else {
-    $location.url('/applications');
-  }
+loMod.controller('NavigationCtrl', function($scope, $rootScope, $filter, loLiveLoader, LoLiveAppList) {
+
+  loLiveLoader(LoLiveAppList.getList, '/admin/applications/').then(function(data){
+    $scope.applications = data.live.members;
+  });
+
+  $scope.$watch('oPath', function() {
+    if ($rootScope.oPath) {
+      var a = $rootScope.oPath;
+      a = a.substr('/applications/:appId/'.length);
+      $scope.current = a.substr(0, a.indexOf('/') > 0 ? a.indexOf('/') : a.length);
+    }
+  });
 });
 
-angular.module('loApp.controllers').controller('AppDropdownCtrl', function($rootScope, $filter, LoApp) {
-  LoApp.getList(function(data){
-    $rootScope.applications = $filter('filter')(data._members, {'visible': true});
-  });
+loMod.controller('ErrorCtrl', function() {
+  window.location.href = '/admin/console/error.html';
 });
