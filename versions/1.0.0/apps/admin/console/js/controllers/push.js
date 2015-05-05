@@ -31,16 +31,21 @@ loMod.controller('PushCtrl', function($scope, $rootScope, $log, LoPush, loPush, 
     $scope.configuredUrlPing = true;
     $scope.connected = false;
 
-    $resource($scope.pushModel.upsURL + '/rest/ping/').get({}, function(){
-      $scope.configuredUrlPing = false;
-      $scope.connected = true;
-    }, function(error){
-      $scope.configuredUrlPing = false;
-      $scope.connected = false;
-      if( error.status === 401 ) {
-        $scope.connected = true;
+    LoPush.ping({appId: $scope.curApp.id},
+      // success
+      function(data) {
+        $scope.configuredUrlPing = false;
+        if (data.valid) {
+          $scope.connected = true;
+        } else {
+          $scope.connected = false;
+        }
+      },
+      // error
+      function(httpResponse) {
+        $log.error('Error verifying push url: ' + httpResponse);
       }
-    });
+    );
   };
 
   if($scope.pushModel.upsURL) {
@@ -51,22 +56,23 @@ loMod.controller('PushCtrl', function($scope, $rootScope, $log, LoPush, loPush, 
     // Turns on the spinner in push url input message;
     $scope.pushUrlPing = true;
 
-    var _res = loPushPing(pushUrl + '/rest/ping/');
+    var _res = loPushPing(pushUrl);
     var _resMethod = _res.ping;
 
     var _callbacks = {
-      success: function(){
+      success: function(data){
         $scope.pushUrlPing = false;
-        // Hides the message about URL not reachable under the url input;
-        $scope.pushUrlInvalid = false;
-      },
-      error: function(error){
-        $scope.pushUrlPing = false;
-        if( error.status === 401 ) {
+        if (data.valid) {
+          // Hides the message about URL not reachable under the url input;
           $scope.pushUrlInvalid = false;
         } else {
           $scope.pushUrlInvalid = true;
         }
+      },
+      error: function(error){
+        $scope.pushUrlPing = false;
+        $scope.pushUrlInvalid = true;
+        $log.error('Error verifying push url: ' + error);
       }
     };
 
@@ -143,4 +149,5 @@ loMod.controller('PushCtrl', function($scope, $rootScope, $log, LoPush, loPush, 
     });
   };
 
+  $rootScope.preventLoseChanges($scope/*, $scope.save, $scope.clear*/);
 });

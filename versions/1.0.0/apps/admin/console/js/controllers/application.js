@@ -2,7 +2,7 @@
 
 var loMod = angular.module('loApp.controllers.application', []);
 
-loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $location, $modal, $filter, $http, $route, Notifications, loAppList, LoApp, LoStorage, LoPush, LoRealmApp, LoBusinessLogicScripts) {
+loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $location, $modal, $filter, $http, $route, Notifications, loAppList, LoApp, LoStorage, LoPush, LoRealmApp, LoClient, LoBusinessLogicScripts) {
 
   $rootScope.hideSidebar = true;
 
@@ -172,21 +172,29 @@ loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $loca
     });
   };
 
-  var DeleteApplicationModalCtrl = function ($scope, $modalInstance, $log, LoApp, LoRealmApp) {
+  var DeleteApplicationModalCtrl = function ($scope, $modalInstance, $log, LoApp, LoRealmApp, LoClient) {
 
     $scope.applicationDelete = function (appId) {
       $log.debug('Deleting application: ' + appId);
-      LoApp.delete({appId: appId},
-        // success
-        function(/*value, responseHeaders*/) {
-          Notifications.success('The application "' + appId + '" has been deleted.');
-          LoRealmApp.delete({appId: appId});
-          //$route.reload(); -- ammendonca: removed, since it's live refreshed
-          $modalInstance.close();
-        },
-        // error
-        function (httpResponse) {
-          Notifications.httpError('Failed to delete the application "' + appId + '".', httpResponse);
+      LoClient.getList({appId: appId},
+      // success
+        function (clientApps) {
+          LoApp.delete({appId: appId},
+            // success
+            function (/*value, responseHeaders*/) {
+              Notifications.success('The application "' + appId + '" has been deleted.');
+              LoRealmApp.delete({appId: appId});
+              for (var i = 0; i < clientApps.members.length; i++) {
+                LoRealmApp.delete({appId: clientApps.members[i]['app-key']});
+              }
+              //$route.reload(); -- ammendonca: removed, since it's live refreshed
+              $modalInstance.close();
+            },
+            // error
+            function (httpResponse) {
+              Notifications.httpError('Failed to delete the application "' + appId + '".', httpResponse);
+            }
+          );
         }
       );
     };
@@ -402,8 +410,11 @@ loMod.controller('AppListCtrl', function($scope, $rootScope, $routeParams, $loca
           $scope.app.id = $scope.app.path.replace(/\/$/, '').split('/').pop();
         }
         else {
-          $scope.app.id = $scope.app.url.replace(/\/$/, '').replace(/\.git$/, '').split('/').pop();
+          $scope.app.id = $scope.app.url.replace(/\/$/, '').replace(/\.git$/, '').split('/').pop() + ($scope.app.branch ? ('_' + $scope.app.branch) : '');
         }
+      }
+      if ($scope.source === 'git' && $scope.app.url) {
+        $scope.app.protocol = ($scope.app.url.indexOf('ssh://') === 0) ? 'ssh' : 'https';
       }
     };
 
@@ -532,7 +543,14 @@ var importApp = function(app, LoAppExamples, Notifications, $modalInstance, $rou
   };
 
   if (app.hasOwnProperty('url')) {
-    new LoAppExamples({ id: app.id, url: app.url, branch: app.branch }).$importGit({}, installSuccess, installFailure);
+    if (app.usePassphrase) {
+      delete app.username;
+      delete app.password;
+    }
+    else {
+      delete app.passphrase;
+    }
+    new LoAppExamples({ id: app.id, url: app.url, branch: app.branch, user: app.username, pwd: app.password, passphrase: app.passphrase }).$importGit({}, installSuccess, installFailure);
   }
   else if (app.hasOwnProperty('path')) {
     new LoAppExamples({ id: app.id, localPath: app.path }).$install({}, installSuccess, installFailure);

@@ -16,7 +16,8 @@ var loMod = angular.module('loApp', [
   'patternfly.select',
   'patternfly.validation',
   'ui.bootstrap',
-  'ui.codemirror'
+  'ui.codemirror',
+  'hawkularCharts'
 ]);
 
 var liveOak = new LiveOak({
@@ -151,8 +152,11 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loClients: function(LoClient, $route){
           return LoClient.getList({appId: $route.current.params.appId});
         },
-        loRealmAppClients : function(LoRealmAppListLoader) {
-          return new LoRealmAppListLoader();
+        loRealmAppRoles: function(LoRealmAppRoles, $route) {
+          return LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
+              return data;
+            }
+          );
         }
       }
     })
@@ -163,55 +167,22 @@ loMod.config(['$routeProvider', function($routeProvider) {
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
-        loRealmApp: function(LoRealmApp, $route) {
-          return LoRealmApp.get({appId: $route.current.params.appId}).$promise.then(function(data) {
-              return data;
-            },
-            function() {
-              // Lazily create the application if not present
-              return new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).
-                $create({realmId: 'liveoak-apps'}).then(function(data){ return data;});
-            }
-          );
-        },
-        loRealmAppClient: function(LoRealmApp, $route) {
-          return LoRealmApp.get({appId: $route.current.params.clientId}).$promise.then(function (data) {
-            return data;
-          });
-        },
         loClient: function(LoClient, LoRealmApp, $route) {
-          return LoRealmApp.get({appId: $route.current.params.clientId}).$promise.then(function (data) {
-            return LoClient.get({appId: $route.current.params.appId, clientId: data.id}).$promise.then(function(data){
-              return data;
-            });
+          return LoClient.get({appId: $route.current.params.appId, clientId: $route.current.params.clientId}).$promise.then(function(data){
+            return data;
           });
         },
         loClients: function(LoClient, $route){
           return LoClient.getList({appId: $route.current.params.appId});
         },
         loRealmAppRoles: function(LoRealmAppRoles, $route) {
-          // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
           return LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              return [];
             }
           );
         },
         loRealmRoles: function(LoRealmRolesLoader){
           return new LoRealmRolesLoader();
-        },
-        scopeMappings: function(LoRealmAppClientScopeMapping, $route){
-          // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
-          return LoRealmAppClientScopeMapping.query({appId: $route.current.params.appId, clientId: $route.current.params.clientId}).$promise.then(function(data) {
-              return data;
-            },
-            function() {
-              return [];
-            }
-          );
         }
       }
     })
@@ -222,18 +193,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         currentApp: function(LoAppLoader){
           return new LoAppLoader();
         },
-        loRealmAppClient: function(LoRealmApp) {
-          return new LoRealmApp();
-        },
         loRealmAppRoles: function(LoRealmApp, LoRealmAppRolesLoader, $route) {
-          // FIXME: LIVEOAK-339 & 373 - Remove this once it's done properly on server-side
           return LoRealmApp.get({appId: $route.current.params.appId}).$promise.then(function() {
               return new LoRealmAppRolesLoader();
-            },
-            function() {
-              // Lazily create the application if not present
-              return new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).
-                $create({realmId: 'liveoak-apps'}).then(function(){ return new LoRealmAppRolesLoader();});
             }
           );
         },
@@ -245,9 +207,6 @@ loMod.config(['$routeProvider', function($routeProvider) {
         },
         loRealmRoles: function(LoRealmRolesLoader){
           return new LoRealmRolesLoader();
-        },
-        scopeMappings: function(LoRealmAppClientScopeMapping){
-          return new LoRealmAppClientScopeMapping();
         }
       }
     })
@@ -276,14 +235,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         currentApp: function(LoAppLoader) {
           return new LoAppLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmApp : function(LoRealmApp, $route) {
           return LoRealmApp.get({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              // Lazily create the application if not present
-              return new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'});
             }
           );
         }/*,
@@ -344,16 +298,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loStorageList : function(LoSecurityCollectionsLoader) {
           return new LoSecurityCollectionsLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmAppRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-              function() {
-                $route.reload();
-              });
             }
           );
         },
@@ -432,23 +379,10 @@ loMod.config(['$routeProvider', function($routeProvider) {
         userRoles: function() {
           return [];
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
-        /*appRoles: function(LoRealmAppRolesLoader) {
-          return new LoRealmAppRolesLoader();
-        }*/
         appRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(
             function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-                function() {
-                  return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(
-                    function(data) {
-                      return data;
-                    });
-                });
             });
         }
       }
@@ -577,16 +511,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loStorageList : function(LoSecurityCollectionsLoader) {
           return new LoSecurityCollectionsLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmAppRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-                function() {
-                  $route.reload();
-                });
             }
           );
         },
@@ -626,16 +553,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loAppExpanded : function(LoSecurityCollectionsLoader) {
           return new LoSecurityCollectionsLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmAppRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-                function() {
-                  return undefined;
-                });
             }
           );
         },
@@ -675,16 +595,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loAppExpanded : function(LoSecurityCollectionsLoader) {
           return new LoSecurityCollectionsLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmAppRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-                function() {
-                  return undefined;
-                });
             }
           );
         },
@@ -724,16 +637,9 @@ loMod.config(['$routeProvider', function($routeProvider) {
         loAppExpanded : function(LoSecurityCollectionsLoader) {
           return new LoSecurityCollectionsLoader();
         },
-        // FIXME: LIVEOAK-339 - Remove this once it's done properly on server-side
         loRealmAppRoles: function(LoRealmAppRoles, LoRealmApp, $route) {
           return new LoRealmAppRoles.query({appId: $route.current.params.appId}).$promise.then(function(data) {
               return data;
-            },
-            function() {
-              new LoRealmApp({'name': $route.current.params.appId, 'bearerOnly': true}).$create({realmId: 'liveoak-apps'},
-                function() {
-                  return undefined;
-                });
             }
           );
         },

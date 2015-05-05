@@ -666,11 +666,14 @@ input[type=number].no-spinner::-webkit-outer-spin-button {
 }
 .lo-info-pane a.btn {
   margin-left: 0;
-  margin-bottom: 20px;
 }
 .lo-info-pane a.btn .fa {
   font-size: 13px;
   margin-right: 5px;
+}
+.lo-info-pane a.btn + .link {
+  margin-top: 10px;
+  display: block;
 }
 .lo-info-pane section {
   margin-bottom: 25px;
@@ -840,6 +843,10 @@ form .form-group:last-child {
 .lo-form-horizontal .form-group > div,
 form .form-group > div {
   padding-left: 0.5em;
+}
+.lo-form-horizontal .form-group > div.side,
+form .form-group > div.side {
+  padding-right: 0;
 }
 .lo-form-horizontal .form-group table,
 form .form-group table {
@@ -1432,6 +1439,12 @@ legend.collapsible.collapsed {
 .btn {
   margin-left: .5em;
 }
+.btn-link {
+  color: #63b474;
+}
+.btn-link:hover {
+  color: #459656;
+}
 .btn-primary {
   background-color: #63b474;
   border-color: #459656;
@@ -1622,6 +1635,13 @@ legend.collapsible.collapsed {
 .import-applications .bootstrap-select.btn-group:not(.input-group-btn) {
   margin-bottom: 0;
 }
+.col-sm-offset-4.link {
+  margin-bottom: -5px;
+}
+.col-sm-offset-4.link .btn {
+  margin-left: 0;
+  padding-left: 0;
+}
 /*
 ***********************************
           Specific Pages
@@ -1695,6 +1715,10 @@ legend.collapsible.collapsed {
 .example-apps .panel .panel-body .btn .spinner.spinner-inline {
   display: none;
   vertical-align: baseline;
+}
+.example-apps .panel .panel-body .link {
+  display: inline-block;
+  margin-top: 10px;
 }
 .example-apps .panel .panel-body .pull-right {
   width: calc(100% - 127px);
@@ -2094,7 +2118,7 @@ tr.deleted td input {
     width: 33%;
     margin-bottom: 20px;
     padding: 0 10px;
-    min-height: 65px;
+    min-height: 55px;
   }
 }
 @media only screen and (min-width: 992px) {
@@ -2370,4 +2394,21 @@ tr.deleted td input {
 }
 .CodeMirror-activeline-background {
   background: #DDEEDD;
+}
+.loading-backdrop {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  background-color: rgba(240, 240, 240, 0.7);
+  z-index: 2000;
+  margin-bottom: -99999px;
+  padding-bottom: 99999px;
+}
+.loading {
+  position: fixed;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  font-size: 1.4em;
 }

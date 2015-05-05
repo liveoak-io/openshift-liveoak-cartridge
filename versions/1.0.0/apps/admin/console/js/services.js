@@ -255,6 +255,10 @@ loMod.factory('LoPush', function($resource) {
     delete : {
       method : 'DELETE',
       params : { appId : '@appId'}
+    },
+    ping : {
+      method : 'GET',
+      url : '/admin/applications/:appId/resources/push/ping'
     }
   });
 });
@@ -518,9 +522,10 @@ loMod.factory('LoClient', function($resource) {
 
 loMod.factory('loPushPing', function($resource) {
   return function(url){
-    return $resource(url, {}, {
+    return $resource('/admin/system/ups/module/ping', {}, {
       ping : {
-        method : 'GET'
+        method : 'GET',
+        params : { url : url }
       }
     });
   };
@@ -814,3 +819,9 @@ loMod.service('loJSON', function() {
   };
 
 });
+
+loMod.factory('LoMetrics', function($resource) {
+  return $resource('/rhq-metrics/:dataType', {
+  });
+});
+

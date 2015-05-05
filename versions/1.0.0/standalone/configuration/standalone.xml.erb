@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 
-<server xmlns="urn:jboss:domain:2.0">
+<server xmlns="urn:jboss:domain:2.2">
     <extensions>
         <extension module="org.jboss.as.clustering.infinispan"/>
         <extension module="org.jboss.as.connector"/>
@@ -32,7 +32,7 @@
         <security-realms>
             <security-realm name="ManagementRealm">
                 <authentication>
-                    <local default-user="$local"/>
+                    <local default-user="$local" skip-group-loading="true"/>
                     <properties path="mgmt-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization map-groups-to-roles="false">
@@ -41,7 +41,7 @@
             </security-realm>
             <security-realm name="ApplicationRealm">
                 <authentication>
-                    <local default-user="$local" allowed-users="*"/>
+                    <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization>
@@ -85,6 +85,12 @@
                     <named-formatter name="COLOR-PATTERN"/>
                 </formatter>
             </console-handler>
+            <console-handler name="CONSOLE-LOG">
+                <level name="INFO"/>
+                <formatter>
+                    <named-formatter name="PATTERN-LOG"/>
+                </formatter>
+            </console-handler>
             <periodic-rotating-file-handler name="FILE" autoflush="true">
                 <formatter>
                     <named-formatter name="PATTERN"/>
@@ -111,6 +117,12 @@
             <logger category="jacorb.config">
                 <level name="ERROR"/>
             </logger>
+            <logger category="io.liveoak.container.analytics.Analytics.log" use-parent-handlers="false">
+                <level name="INFO"/>
+                <handlers>
+                    <handler name="CONSOLE-LOG"></handler>
+                </handlers>
+            </logger>
             <root-logger>
                 <level name="INFO"/>
                 <handlers>
@@ -123,6 +135,9 @@
             </formatter>
             <formatter name="COLOR-PATTERN">
                 <pattern-formatter pattern="%K{level}%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+            </formatter>
+            <formatter name="PATTERN-LOG">
+                <pattern-formatter pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %s%E%n"/>
             </formatter>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:batch:1.0">
@@ -218,7 +233,7 @@
             <default-security-domain value="other"/>
             <default-missing-method-permissions-deny-access value="true"/>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:io:1.0">
+        <subsystem xmlns="urn:jboss:domain:io:1.1">
             <worker name="default" io-threads="3"/>
             <buffer-pool name="default" buffer-size="16384" buffers-per-slice="128"/>
         </subsystem>
@@ -335,10 +350,8 @@
             <recovery-environment socket-binding="txn-recovery-environment" status-socket-binding="txn-status-manager"/>
             <coordinator-environment default-timeout="300"/>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:undertow:1.0">
-            <buffer-caches>
-                <buffer-cache name="default" buffer-size="1024" buffers-per-region="1024" max-regions="10"/>
-            </buffer-caches>
+        <subsystem xmlns="urn:jboss:domain:undertow:1.2">
+            <buffer-cache name="default" buffer-size="1024" buffers-per-region="1024" max-regions="10"/>
             <server name="default-server">
                 <http-listener name="default" socket-binding="http" proxy-address-forwarding="true"/>
                 <host name="default-host" alias="localhost">
@@ -349,16 +362,17 @@
             </server>
             <servlet-container name="default" default-buffer-cache="default" stack-trace-on-error="local-only">
                 <jsp-config/>
+                <websockets/>
             </servlet-container>
             <handlers>
                 <reverse-proxy name="reverse-proxy" connections-per-thread="30">
-                    <host name="http://<%= ENV['OPENSHIFT_LIVEOAK_IP'] %>:<%= ENV['OPENSHIFT_LIVEOAK_PORT'] %>" instance-id="myRoute"/>
+                    <host name="<%= ENV['OPENSHIFT_LIVEOAK_IP'] %>" outbound-socket-binding="liveoak-local" instance-id="myRoute"/>
                 </reverse-proxy>
                 <file name="welcome-content" path="${jboss.home.dir}/welcome-content" directory-listing="true"/>
             </handlers>
             <filters>
-                <response-header name="server-header" header-name="Server" header-value="Wildfly 8"/>
-                <response-header name="x-powered-by-header" header-name="X-Powered-By" header-value="Undertow 1"/>
+                <response-header name="server-header" header-name="Server" header-value="WildFly/8"/>
+                <response-header name="x-powered-by-header" header-name="X-Powered-By" header-value="Undertow/1"/>
             </filters>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:webservices:1.2">
@@ -405,6 +419,9 @@
         <socket-binding name="txn-status-manager" port="4713"/>
         <outbound-socket-binding name="mail-smtp">
             <remote-destination host="localhost" port="25"/>
+        </outbound-socket-binding>
+        <outbound-socket-binding name="liveoak-local">
+            <remote-destination host="<%= ENV['OPENSHIFT_LIVEOAK_IP'] %>" port="<%= ENV['OPENSHIFT_LIVEOAK_PORT'] %>"/>
         </outbound-socket-binding>
     </socket-binding-group>
 </server>

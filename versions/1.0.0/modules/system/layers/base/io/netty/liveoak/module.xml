@@ -8,7 +8,7 @@
 <module xmlns="urn:jboss:module:1.3" name="io.netty" slot="liveoak">
 
     <resources>
-        <artifact name="io.netty:netty-all:4.0.21.Final"/>
+        <artifact name="io.netty:netty-all:4.0.25.Final"/>
     </resources>
 
     <dependencies>
