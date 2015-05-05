@@ -1,12 +1,12 @@
 Name: liveoak
 Cartridge-Short-Name: LIVEOAK
-Display-Name: LiveOak BaaS 1.0.0.Beta02
+Display-Name: LiveOak mBaaS 1.0.0.Final
 Description: "The opensource mobile services platform."
 Version: '1.0.0'
 License: EPL
 License-Url: http://www.eclipse.org/legal/epl-v10.html
 Vendor: Red Hat
-Cartridge-Version: '0.0.0.2'
+Cartridge-Version: '0.0.0.3'
 Cartridge-Vendor: jboss
 Categories:
   - web_framework
