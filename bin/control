@@ -40,8 +40,8 @@ function start() {
     if [ -a $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/bin/.liveoak_pid ]; then
         echo "LiveOak already started"
     else
-        $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/bin/standalone.sh -b $OPENSHIFT_LIVEOAK_IP -Djboss.bind.address=$OPENSHIFT_LIVEOAK_IP -Djboss.bind.address.management=$OPENSHIFT_LIVEOAK_IP -Djboss.bind.address.unsecure=$OPENSHIFT_LIVEOAK_IP -Djboss.liveoak.port=18383 -Dopenshift.gear.dns=$OPENSHIFT_GEAR_DNS -Dliveoak.mongo.host=$OPENSHIFT_MONGODB_DB_HOST -Dliveoak.mongo.port=$OPENSHIFT_MONGODB_DB_PORT -Dliveoak.mongo.username=$OPENSHIFT_MONGODB_DB_USERNAME -Dliveoak.mongo.password=$OPENSHIFT_MONGODB_DB_PASSWORD -Dliveoak.mongo.authDb=admin -Dliveoak.initial.password=$OPENSHIFT_MONGODB_DB_PASSWORD &> /dev/null &
-        echo $! > $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/bin/.liveoak_pid 
+        $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/bin/standalone.sh -b $OPENSHIFT_LIVEOAK_IP -Djboss.bind.address=$OPENSHIFT_LIVEOAK_IP -Djboss.bind.address.management=$OPENSHIFT_LIVEOAK_IP -Djboss.bind.address.unsecure=$OPENSHIFT_LIVEOAK_IP -Djboss.liveoak.port=$OPENSHIFT_LIVEOAK_PORT -Dopenshift.gear.dns=$OPENSHIFT_GEAR_DNS -Dliveoak.mongo.host=$OPENSHIFT_MONGODB_DB_HOST -Dliveoak.mongo.port=$OPENSHIFT_MONGODB_DB_PORT -Dliveoak.mongo.username=$OPENSHIFT_MONGODB_DB_USERNAME -Dliveoak.mongo.password=$OPENSHIFT_MONGODB_DB_PASSWORD -Dliveoak.mongo.authDb=admin -Dliveoak.initial.password=$OPENSHIFT_MONGODB_DB_PASSWORD &> /dev/null &
+        echo $! > $OPENSHIFT_LIVEOAK_DIR/versions/1.0.0/bin/.liveoak_pid
     fi
 
 }
